@@ -2,7 +2,7 @@ language: c
 
 before_script:
   - export RTT_CC='gcc'
-  - export RTT_ROOT=`pwd` + "/rt-thread"
+  - export RTT_ROOT=`pwd`"/rt-thread"
 
 script:
   - git clone https://github.com/RT-Thread/rt-thread
