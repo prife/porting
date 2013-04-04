@@ -13,8 +13,8 @@ script:
   - export RTT_EXEC_PATH=~/toolchain/arm-2011.03/bin
 
 # compile 
-  # - scons -C rt-thread/bsp/lpc176x
-  - scons -C beaglebone
+  # - scons -C beaglebone
+  - scons -C versatile
 
 notifications:
   email: false
