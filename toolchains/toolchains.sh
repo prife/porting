@@ -9,3 +9,8 @@ if [ ! -f "mips-2012.09-98-mips-sde-elf-i686-pc-linux-gnu.tar.bz2" ];then
 wget -c https://sourcery.mentor.com/public/gnu_toolchain/mips-sde-elf/mips-2012.09-98-mips-sde-elf-i686-pc-linux-gnu.tar.bz2
 tar jxvf mips-2012.09-98-mips-sde-elf-i686-pc-linux-gnu.tar.bz2
 fi
+
+if [ ! -f "scons-2.3.0.tar.gz" ];then
+wget -c http://prdownloads.sourceforge.net/scons/scons-2.3.0.tar.gz
+tar zxvf scons-2.3.0.tar.gz
+fi
