@@ -1,6 +1,7 @@
 language: c
 
 before_script:
+  - "sudo apt-get -qq install libc6:i386 libgcc1:i386 gcc-4.6-base:i386 libstdc++5:i386 libstdc++6:i386 || true"
   - export RTT_CC='gcc'
   - export RTT_ROOT=`pwd`"/rt-thread"
 
@@ -9,12 +10,12 @@ script:
 
 # install toolchain
   - mkdir ~/toolchain
-  - curl -s https://sourcery.mentor.com/public/gnu_toolchain/arm-none-eabi/arm-2011.03-42-arm-none-eabi-i686-pc-linux-gnu.tar.bz2 | tar xjf - -C ~/toolchain 
-  - export RTT_EXEC_PATH=~/toolchain/arm-2011.03/bin
+  - curl -s https://sourcery.mentor.com/public/gnu_toolchain/arm-none-eabi/arm-2012.09-63-arm-none-eabi-i686-pc-linux-gnu.tar.bz2 | tar xjf - -C ~/toolchain 
+  - export RTT_EXEC_PATH=~/toolchain/arm-2012.09/bin
 
 # compile 
-  # - scons -C rt-thread/bsp/lpc176x
-  - scons -C beaglebone
+  # - scons -C beaglebone
+  - scons -C versatile
 
 notifications:
   email: false
