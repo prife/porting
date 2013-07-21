@@ -1,5 +1,5 @@
 /*
- *  UART driver
+ *  serial.c UART driver
  *
  * COPYRIGHT (C) 2013, Shanghai Real-Thread Technology Co., Ltd
  *
@@ -34,38 +34,38 @@
 
 struct hw_uart_device
 {
-	rt_uint32_t hw_base;
-	rt_uint32_t irqno;
+    rt_uint32_t hw_base;
+    rt_uint32_t irqno;
 };
 
-#define UART_DR(base)	__REG32(base + 0x00)
-#define UART_FR(base)	__REG32(base + 0x18)
-#define UART_CR(base)	__REG32(base + 0x30)
-#define UART_IMSC(base)	__REG32(base + 0x38)
-#define UART_ICR(base)	__REG32(base + 0x44)
+#define UART_DR(base)   __REG32(base + 0x00)
+#define UART_FR(base)   __REG32(base + 0x18)
+#define UART_CR(base)   __REG32(base + 0x30)
+#define UART_IMSC(base) __REG32(base + 0x38)
+#define UART_ICR(base)  __REG32(base + 0x44)
 
-#define UARTFR_RXFE   	0x10
-#define UARTFR_TXFF   	0x20
-#define UARTIMSC_RXIM 	0x10
-#define UARTIMSC_TXIM 	0x20
-#define UARTICR_RXIC  	0x10
-#define UARTICR_TXIC  	0x20
+#define UARTFR_RXFE     0x10
+#define UARTFR_TXFF     0x20
+#define UARTIMSC_RXIM   0x10
+#define UARTIMSC_TXIM   0x20
+#define UARTICR_RXIC    0x10
+#define UARTICR_TXIC    0x20
 
-static void rt_hw_uart_isr(int irqno, void* param)
+static void rt_hw_uart_isr(int irqno, void *param)
 {
-    struct rt_serial_device* serial = (struct rt_serial_device*)param;
+    struct rt_serial_device *serial = (struct rt_serial_device *)param;
 
     rt_hw_serial_isr(serial);
 }
 
 static rt_err_t uart_configure(struct rt_serial_device *serial, struct serial_configure *cfg)
 {
-	return RT_EOK;
+    return RT_EOK;
 }
 
 static rt_err_t uart_control(struct rt_serial_device *serial, int cmd, void *arg)
 {
-    struct hw_uart_device* uart;
+    struct hw_uart_device *uart;
 
     RT_ASSERT(serial != RT_NULL);
     uart = (struct hw_uart_device *)serial->parent.user_data;
@@ -90,7 +90,7 @@ static rt_err_t uart_control(struct rt_serial_device *serial, int cmd, void *arg
 
 static int uart_putc(struct rt_serial_device *serial, char c)
 {
-    struct hw_uart_device* uart;
+    struct hw_uart_device *uart;
 
     RT_ASSERT(serial != RT_NULL);
     uart = (struct hw_uart_device *)serial->parent.user_data;
@@ -104,7 +104,7 @@ static int uart_putc(struct rt_serial_device *serial, char c)
 static int uart_getc(struct rt_serial_device *serial)
 {
     int ch;
-    struct hw_uart_device* uart;
+    struct hw_uart_device *uart;
 
     RT_ASSERT(serial != RT_NULL);
     uart = (struct hw_uart_device *)serial->parent.user_data;
@@ -137,7 +137,7 @@ static struct rt_serial_device _serial;
 
 int rt_hw_uart_init(void)
 {
-    struct hw_uart_device* uart;
+    struct hw_uart_device *uart;
     struct serial_configure config;
 
     uart = &_uart_device;
@@ -153,12 +153,12 @@ int rt_hw_uart_init(void)
     _serial.config = config;
 
     /* register UART1 device */
-    rt_hw_serial_register(&_serial, "uart",
+    rt_hw_serial_register(&_serial, "uart1",
                           RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX | RT_DEVICE_FLAG_STREAM,
                           uart);
     /* enable Rx and Tx of UART */
     UART_CR(uart->hw_base) = (1 << 0) | (1 << 8) | (1 << 9);
 
-	return 0;
+    return 0;
 }
 INIT_BOARD_EXPORT(rt_hw_uart_init);

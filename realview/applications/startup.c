@@ -24,45 +24,46 @@ extern int  rt_application_init(void);
  */
 void rtthread_startup(void)
 {
-	/* initialzie hardware interrupt */
-	// rt_hw_interrupt_init();
+    /* initialzie hardware interrupt */
+    rt_hw_interrupt_init();
 
-	/* initialize board */
-	rt_hw_board_init();
-	/* show RT-Thread version */
-	rt_show_version();
+    /* initialize board */
+    rt_hw_board_init();
+    /* show RT-Thread version */
+    rt_show_version();
 
-	/* initialize memory system */
+    /* initialize memory system */
 #ifdef RT_USING_HEAP
     rt_system_heap_init(HEAP_BEGIN, HEAP_END);
 #endif
 
-	/* initialize scheduler system */
-	rt_system_scheduler_init();
+    /* initialize scheduler system */
+    rt_system_scheduler_init();
 
-	/* initialize soft timer thread */
-	rt_system_timer_thread_init();
+    /* initialize soft timer thread */
+    rt_system_timer_thread_init();
 
-	/* initialize application */
-	rt_application_init();
+    /* initialize application */
+    rt_application_init();
 
-	/* initialize idle thread */
-	rt_thread_idle_init();
+    /* initialize idle thread */
+    rt_thread_idle_init();
 
-	/* start scheduler */
-	rt_system_scheduler_start();
+    /* start scheduler */
+    rt_system_scheduler_start();
 
-	/* never reach here */
-	return ;
+    /* never reach here */
+    return ;
 }
 
 int main(void)
 {
-	/* disable interrupt first */
-	rt_hw_interrupt_disable();
+    /* disable interrupt first */
+    rt_hw_interrupt_disable();
 
-	/* invoke rtthread_startup */
-	rtthread_startup();
+    /* invoke rtthread_startup */
+    rtthread_startup();
 
-	return 0;
+    return 0;
 }
+

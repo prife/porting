@@ -1,7 +1,7 @@
 /*
  * File      : trap.c
  * This file is part of RT-Thread RTOS
- * COPYRIGHT (C) 2006, RT-Thread Develop Team
+ * COPYRIGHT (C) 2013, RT-Thread Develop Team
  *
  * The license and distribution terms for this file may be
  * found in the file LICENSE in this distribution or at
@@ -9,13 +9,14 @@
  *
  * Change Logs:
  * Date           Author       Notes
- * 2011-09-23     Bernard      first version
+ * 2013-07-20     Bernard      first version
  */
 
 #include <rtthread.h>
 #include <rthw.h>
 
 #include "realview.h"
+#include "gic.h"
 
 extern struct rt_thread *rt_current_thread;
 #ifdef RT_USING_FINSH
@@ -28,15 +29,15 @@ extern long list_thread(void);
  * @param regs the registers point
  */
 
-void rt_hw_show_register (struct rt_hw_register *regs)
+void rt_hw_show_register(struct rt_hw_register *regs)
 {
-	rt_kprintf("Execption:\n");
-	rt_kprintf("r00:0x%08x r01:0x%08x r02:0x%08x r03:0x%08x\n", regs->r0, regs->r1, regs->r2, regs->r3);
-	rt_kprintf("r04:0x%08x r05:0x%08x r06:0x%08x r07:0x%08x\n", regs->r4, regs->r5, regs->r6, regs->r7);
-	rt_kprintf("r08:0x%08x r09:0x%08x r10:0x%08x\n", regs->r8, regs->r9, regs->r10);
-	rt_kprintf("fp :0x%08x ip :0x%08x\n", regs->fp, regs->ip);
-	rt_kprintf("sp :0x%08x lr :0x%08x pc :0x%08x\n", regs->sp, regs->lr, regs->pc);
-	rt_kprintf("cpsr:0x%08x\n", regs->cpsr);
+    rt_kprintf("Execption:\n");
+    rt_kprintf("r00:0x%08x r01:0x%08x r02:0x%08x r03:0x%08x\n", regs->r0, regs->r1, regs->r2, regs->r3);
+    rt_kprintf("r04:0x%08x r05:0x%08x r06:0x%08x r07:0x%08x\n", regs->r4, regs->r5, regs->r6, regs->r7);
+    rt_kprintf("r08:0x%08x r09:0x%08x r10:0x%08x\n", regs->r8, regs->r9, regs->r10);
+    rt_kprintf("fp :0x%08x ip :0x%08x\n", regs->fp, regs->ip);
+    rt_kprintf("sp :0x%08x lr :0x%08x pc :0x%08x\n", regs->sp, regs->lr, regs->pc);
+    rt_kprintf("cpsr:0x%08x\n", regs->cpsr);
 }
 
 /**
@@ -49,15 +50,15 @@ void rt_hw_show_register (struct rt_hw_register *regs)
  */
 void rt_hw_trap_udef(struct rt_hw_register *regs)
 {
-	rt_hw_show_register(regs);
+    rt_hw_show_register(regs);
 
-	rt_kprintf("undefined instruction\n");
-	rt_kprintf("thread %.*s stack:\n", RT_NAME_MAX, rt_current_thread->name);
+    rt_kprintf("undefined instruction\n");
+    rt_kprintf("thread %.*s stack:\n", RT_NAME_MAX, rt_current_thread->name);
 
 #ifdef RT_USING_FINSH
-	list_thread();
+    list_thread();
 #endif
-	rt_hw_cpu_shutdown();
+    rt_hw_cpu_shutdown();
 }
 
 /**
@@ -71,10 +72,10 @@ void rt_hw_trap_udef(struct rt_hw_register *regs)
  */
 void rt_hw_trap_swi(struct rt_hw_register *regs)
 {
-	rt_hw_show_register(regs);
+    rt_hw_show_register(regs);
 
-	rt_kprintf("software interrupt\n");
-	rt_hw_cpu_shutdown();
+    rt_kprintf("software interrupt\n");
+    rt_hw_cpu_shutdown();
 }
 
 /**
@@ -87,15 +88,15 @@ void rt_hw_trap_swi(struct rt_hw_register *regs)
  */
 void rt_hw_trap_pabt(struct rt_hw_register *regs)
 {
-	rt_hw_show_register(regs);
+    rt_hw_show_register(regs);
 
-	rt_kprintf("prefetch abort\n");
-	rt_kprintf("thread %.*s stack:\n", RT_NAME_MAX, rt_current_thread->name);
+    rt_kprintf("prefetch abort\n");
+    rt_kprintf("thread %.*s stack:\n", RT_NAME_MAX, rt_current_thread->name);
 
 #ifdef RT_USING_FINSH
-	list_thread();
+    list_thread();
 #endif
-	rt_hw_cpu_shutdown();
+    rt_hw_cpu_shutdown();
 }
 
 /**
@@ -108,25 +109,25 @@ void rt_hw_trap_pabt(struct rt_hw_register *regs)
  */
 void rt_hw_trap_dabt(struct rt_hw_register *regs)
 {
-	rt_hw_show_register(regs);
+    rt_hw_show_register(regs);
 
-	rt_kprintf("data abort\n");
-	rt_kprintf("thread %.*s stack:\n", RT_NAME_MAX, rt_current_thread->name);
+    rt_kprintf("data abort\n");
+    rt_kprintf("thread %.*s stack:\n", RT_NAME_MAX, rt_current_thread->name);
 
 #ifdef RT_USING_FINSH
-	list_thread();
+    list_thread();
 #endif
-	rt_hw_cpu_shutdown();
+    rt_hw_cpu_shutdown();
 }
 
 void rt_hw_trap_irq()
 {
     void *param;
-	unsigned long ir;
+    unsigned long ir;
     rt_isr_handler_t isr_func;
     extern struct rt_irq_desc isr_table[];
 
-	ir = GIC_CPU_INTACK & 0x3ff;
+    ir = arm_gic_get_active_irq(0);
 
     /* get interrupt service routine */
     isr_func = isr_table[ir].handler;
@@ -135,20 +136,18 @@ void rt_hw_trap_irq()
     /* turn to interrupt service routine */
     isr_func(ir, param);
 
-	/* end of interrupt */
-	GIC_DIST_ENABLE_CLEAR(ir) = 1 << (ir % 32);
-	GIC_CPU_EOI = ir;
-	GIC_DIST_ENABLE_SET(ir) = 1 << (ir % 32);
+    /* end of interrupt */
+    arm_gic_ack(0, ir);
 }
 
 void rt_hw_trap_fiq()
 {
     void *param;
-	unsigned long ir;
+    unsigned long ir;
     rt_isr_handler_t isr_func;
     extern struct rt_irq_desc isr_table[];
 
-	ir = GIC_CPU_INTACK & 0x3ff;
+    ir = arm_gic_get_active_irq(0);
 
     /* get interrupt service routine */
     isr_func = isr_table[ir].handler;
@@ -157,8 +156,7 @@ void rt_hw_trap_fiq()
     /* turn to interrupt service routine */
     isr_func(ir, param);
 
-	/* end of interrupt */
-	GIC_DIST_ENABLE_CLEAR(ir) = 1 << (ir % 32);
-	GIC_CPU_EOI = ir;
-	GIC_DIST_ENABLE_SET(ir) = 1 << (ir % 32);
+    /* end of interrupt */
+    arm_gic_ack(0, ir);
 }
+

@@ -35,40 +35,40 @@
 #define TIMER_MIS(hw_base)               __REG32(hw_base + 0x14)
 #define TIMER_BGLOAD(hw_base)            __REG32(hw_base + 0x18)
 
-#define SYS_CTRL						__REG32(REALVIEW_SCTL_BASE)
+#define SYS_CTRL                        __REG32(REALVIEW_SCTL_BASE)
 
-static void rt_hw_timer_isr(int vector, void* param)
+static void rt_hw_timer_isr(int vector, void *param)
 {
-	rt_tick_increase();
+    rt_tick_increase();
 
-	/* clear interrupt */
-	TIMER_INTCLR(REALVIEW_TIMER0_1_BASE) = 0x01;
+    /* clear interrupt */
+    TIMER_INTCLR(REALVIEW_TIMER0_1_BASE) = 0x01;
 }
 
 int rt_hw_timer_init(void)
 {
-	rt_uint32_t val;
+    rt_uint32_t val;
 
-	/* 
-	 * set clock frequency:
-	 *      REALVIEW_REFCLK is 32KHz
-	 *      REALVIEW_TIMCLK is 1MHz
-	 */
-	SYS_CTRL |= REALVIEW_REFCLK;
-	
-	/* Setup Timer0 for generating irq */
-	val = TIMER_CTRL(REALVIEW_TIMER0_1_BASE);
-	val &= ~TIMER_CTRL_ENABLE;
-	val |= (TIMER_CTRL_32BIT | TIMER_CTRL_PERIODIC | TIMER_CTRL_IE);
-	TIMER_CTRL(REALVIEW_TIMER0_1_BASE) = val;
+    /*
+     * set clock frequency:
+     *      REALVIEW_REFCLK is 32KHz
+     *      REALVIEW_TIMCLK is 1MHz
+     */
+    SYS_CTRL |= REALVIEW_REFCLK;
 
-	TIMER_LOAD(REALVIEW_TIMER0_1_BASE) = 1000;
+    /* Setup Timer0 for generating irq */
+    val = TIMER_CTRL(REALVIEW_TIMER0_1_BASE);
+    val &= ~TIMER_CTRL_ENABLE;
+    val |= (TIMER_CTRL_32BIT | TIMER_CTRL_PERIODIC | TIMER_CTRL_IE);
+    TIMER_CTRL(REALVIEW_TIMER0_1_BASE) = val;
 
-	/* enable timer */
-	TIMER_CTRL(REALVIEW_TIMER0_1_BASE) |= TIMER_CTRL_ENABLE;
+    TIMER_LOAD(REALVIEW_TIMER0_1_BASE) = 1000;
 
-	rt_hw_interrupt_install(IRQ_PBA8_TIMER0_1, rt_hw_timer_isr, RT_NULL, "tick");
-	rt_hw_interrupt_umask(IRQ_PBA8_TIMER0_1);
+    /* enable timer */
+    TIMER_CTRL(REALVIEW_TIMER0_1_BASE) |= TIMER_CTRL_ENABLE;
+
+    rt_hw_interrupt_install(IRQ_PBA8_TIMER0_1, rt_hw_timer_isr, RT_NULL, "tick");
+    rt_hw_interrupt_umask(IRQ_PBA8_TIMER0_1);
 
     return 0;
 }
@@ -80,7 +80,7 @@ INIT_BOARD_EXPORT(rt_hw_timer_init);
 void rt_hw_board_init()
 {
     rt_components_board_init();
-	rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
+    rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
 }
 
 /*@}*/

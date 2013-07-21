@@ -17,32 +17,30 @@
 
 #include <pthread.h>
 
-void* test_task(void* parameter)
+void *test_task(void *parameter)
 {
-	// int index;
-	int count = 0;
+    int count = 0;
 
-	while(1)
-	{
-		// for (index = 0; index < 0xfffff; index ++);
-		rt_thread_delay(RT_TICK_PER_SECOND);
-		rt_kprintf("count = %d\n", count ++);
-	}
+    while (1)
+    {
+        rt_thread_delay(RT_TICK_PER_SECOND);
+        rt_kprintf("count = %d\n", count ++);
+    }
 
-	return RT_NULL;
+    return RT_NULL;
 }
 
 int rt_application_init()
 {
-	pthread_t tid;
+    pthread_t tid;
 
     /* do component initialization */
     rt_components_init();
-	libc_system_init(RT_CONSOLE_DEVICE_NAME);
-	finsh_set_device(RT_CONSOLE_DEVICE_NAME);
+    libc_system_init(RT_CONSOLE_DEVICE_NAME);
+    finsh_set_device(RT_CONSOLE_DEVICE_NAME);
 
-	pthread_create(&tid, RT_NULL, test_task, RT_NULL);
+    pthread_create(&tid, RT_NULL, test_task, RT_NULL);
 
-	return 0;
+    return 0;
 }
 

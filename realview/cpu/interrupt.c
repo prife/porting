@@ -1,7 +1,7 @@
 /*
  * File      : interrupt.c
  * This file is part of RT-Thread RTOS
- * COPYRIGHT (C) 2011, RT-Thread Development Team
+ * COPYRIGHT (C) 2013, RT-Thread Development Team
  *
  * The license and distribution terms for this file may be
  * found in the file LICENSE in this distribution or at
@@ -16,7 +16,7 @@
 #include <rtthread.h>
 #include "realview.h"
 
-#define MAX_HANDLERS				NR_IRQS_PBA8
+#define MAX_HANDLERS                NR_IRQS_PBA8
 
 extern volatile rt_uint8_t rt_interrupt_nest;
 
@@ -27,54 +27,48 @@ rt_uint32_t rt_thread_switch_interrupt_flag;
 
 static void rt_hw_interrupt_handle(int vector, void *param)
 {
-	rt_kprintf("Unhandled interrupt %d occured!!!\n", vector);
+    rt_kprintf("Unhandled interrupt %d occured!!!\n", vector);
 }
 
-extern void rt_cpu_vector_set_base(rt_uint32_t addr);
+const unsigned int VECTOR_BASE = 0x00;
+extern void rt_cpu_vector_set_base(unsigned int addr);
 extern int system_vectors;
+
+static void rt_hw_vector_init(void)
+{
+    unsigned int *dest = (unsigned int *)VECTOR_BASE;
+    unsigned int *src = (unsigned int *)&system_vectors;
+
+    rt_memcpy(dest, src, 16 * 4);
+    rt_cpu_vector_set_base(VECTOR_BASE);
+}
 
 /**
  * This function will initialize hardware interrupt
  */
 void rt_hw_interrupt_init(void)
 {
-	register rt_uint32_t idx;
-    unsigned int *vectors_base =  (unsigned int *)&system_vectors;
+    register rt_uint32_t idx;
 
-	/* set vector table */
-	rt_cpu_vector_set_base((rt_uint32_t)vectors_base);
-
-	GIC_DIST_CTRL = 0x00;
-	/* disable CPU interrupt */
-	GIC_CPU_CTRL = 0x00;
+    /* set vector table */
+    rt_hw_vector_init();
 
     /* init exceptions table */
     rt_memset(isr_table, 0x00, sizeof(isr_table));
-    for(idx=0; idx < MAX_HANDLERS; idx++)
+    for (idx = 0; idx < MAX_HANDLERS; idx++)
     {
         isr_table[idx].handler = rt_hw_interrupt_handle;
     }
 
-    /* disable all interrupt */
-	for (idx = 0; idx < MAX_HANDLERS; idx ++)
-	{
-		GIC_DIST_CONFIG(idx) = 0x00;
-		GIC_DIST_TARGET(idx) = 0xa0a0a0a0;
-		GIC_DIST_ENABLE_CLEAR(idx) = 0xffffffff;
-	}
+    /* initialize ARM GIC */
+    arm_gic_dist_init(0, REALVIEW_GIC_DIST_BASE, IRQ_PBA8_GIC_START);
+    arm_gic_cpu_init(0, REALVIEW_GIC_CPU_BASE);
 
-	/* interrupts are enable for this CPU */
-	GIC_DIST_CTRL = 0x01;
-	GIC_CPU_PRIMASK = 0xf0;
-
-	/* enable CPU interrupt */
-	GIC_CPU_CTRL = 0x01;
-
-	/* init interrupt nest, and context in thread sp */
-	rt_interrupt_nest = 0;
-	rt_interrupt_from_thread = 0;
-	rt_interrupt_to_thread = 0;
-	rt_thread_switch_interrupt_flag = 0;
+    /* init interrupt nest, and context in thread sp */
+    rt_interrupt_nest = 0;
+    rt_interrupt_from_thread = 0;
+    rt_interrupt_to_thread = 0;
+    rt_thread_switch_interrupt_flag = 0;
 }
 
 /**
@@ -83,7 +77,7 @@ void rt_hw_interrupt_init(void)
  */
 void rt_hw_interrupt_mask(int vector)
 {
-	GIC_DIST_ENABLE_SET(vector) = 0x1 << (vector % 32);
+    arm_gic_mask(0, vector);
 }
 
 /**
@@ -92,7 +86,7 @@ void rt_hw_interrupt_mask(int vector)
  */
 void rt_hw_interrupt_umask(int vector)
 {
-	GIC_DIST_ENABLE_CLEAR(vector) = 0x1 << (vector % 32);
+    arm_gic_umask(0, vector);
 }
 
 /**
@@ -102,20 +96,20 @@ void rt_hw_interrupt_umask(int vector)
  * @param old_handler the old interrupt service routine
  */
 rt_isr_handler_t rt_hw_interrupt_install(int vector, rt_isr_handler_t handler,
-                                        void *param, char *name)
+        void *param, char *name)
 {
     rt_isr_handler_t old_handler = RT_NULL;
 
-    if(vector < MAX_HANDLERS)
+    if (vector < MAX_HANDLERS)
     {
         old_handler = isr_table[vector].handler;
 
         if (handler != RT_NULL)
         {
 #ifdef RT_USING_INTERRUPT_INFO
-		    rt_strncpy(isr_table[vector].name, name, RT_NAME_MAX);
+            rt_strncpy(isr_table[vector].name, name, RT_NAME_MAX);
 #endif /* RT_USING_INTERRUPT_INFO */
-		    isr_table[vector].handler = handler;
+            isr_table[vector].handler = handler;
             isr_table[vector].param = param;
         }
     }
