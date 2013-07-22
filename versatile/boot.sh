@@ -1,1 +1,1 @@
-qemu-system-arm -M versatilepb -kernel rtthread-versatile.elf
+qemu-system-arm -nographic -M versatilepb -kernel rtthread-versatile.elf

@@ -29,6 +29,11 @@ SECTIONS
 		__rtmsymtab_start = .;
 		KEEP(*(RTMSymTab))
 		__rtmsymtab_end = .;
+
+		/* initialization section */
+		__rt_init_start = .;
+		KEEP(*(SORT(*.rti_fn*)));
+		__rt_init_end = .;
 	}
 
 	. = ALIGN(4);

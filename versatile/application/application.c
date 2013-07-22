@@ -44,6 +44,8 @@ void second_task(void *param)
 void rt_init_thread_entry(void *parameter)
 {
 	rt_components_init();
+
+	finsh_set_device(RT_CONSOLE_DEVICE_NAME);
 }
 
 int rt_application_init(void)
