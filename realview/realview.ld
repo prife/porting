@@ -2,8 +2,7 @@ OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
 SECTIONS
 {
-    . = 0x70000000;
-
+    . = 0x10000;
     __text_start = .;
     .text :
     {
@@ -20,7 +19,7 @@ SECTIONS
         __vsymtab_start = .;
         KEEP(*(VSymTab))
         __vsymtab_end = .;
-        . = ALIGN(4);	
+        . = ALIGN(4);
 
         /* section information for modules */
         . = ALIGN(4);
