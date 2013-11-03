@@ -40,7 +40,7 @@ static void rt_hw_vector_init(void)
     unsigned int *src = (unsigned int *)&system_vectors;
 
     rt_memcpy(dest, src, 16 * 4);
-    rt_cpu_vector_set_base(VECTOR_BASE);
+    //rt_cpu_vector_set_base(VECTOR_BASE);
 }
 
 /**
@@ -61,8 +61,8 @@ void rt_hw_interrupt_init(void)
     }
 
     /* initialize ARM GIC */
-    arm_gic_dist_init(0, REALVIEW_GIC_DIST_BASE, IRQ_PBA8_GIC_START);
-    arm_gic_cpu_init(0, REALVIEW_GIC_CPU_BASE);
+    arm_gic_dist_init(0, ZED_GIC_DIST_BASE, 0);
+    arm_gic_cpu_init(0, ZED_GIC_CPU_BASE);
 
     /* init interrupt nest, and context in thread sp */
     rt_interrupt_nest = 0;

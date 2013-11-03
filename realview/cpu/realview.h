@@ -73,6 +73,7 @@
  */
 #define IRQ_PBA8_GIC_START          32
 
+#define IRQ_ZED_GTIMER              27
 /*
  * PB-A8 on-board gic irq sources
  */
@@ -317,5 +318,12 @@ struct rt_hw_register
 #define MODEMASK    0x1f
 #define NOINT       0xc0
 
+#define ZED_UART0_BASE              0xE0000000
+#define ZED_UART1_BASE              0xE0001000
+#define ZED_SCTL_BASE               0xF8F00000  /* System Controller */
+#define ZED_TIMER_GLOBAL_BASE       0xF8F00200  /* Global 64bit timer */
+
+#define ZED_GIC_CPU_BASE            0xF8F00100  /* Generic interrupt controller CPU interface */
+#define ZED_GIC_DIST_BASE           0xF8F01000  /* Generic interrupt controller distributor */
 #endif
 

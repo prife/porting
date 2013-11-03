@@ -38,6 +38,8 @@ struct hw_uart_device
     rt_uint32_t irqno;
 };
 
+#define UART_TxRxFIFO0(base) __REG32(base + 0x30)
+
 #define UART_DR(base)   __REG32(base + 0x00)
 #define UART_FR(base)   __REG32(base + 0x18)
 #define UART_CR(base)   __REG32(base + 0x30)
@@ -95,8 +97,9 @@ static int uart_putc(struct rt_serial_device *serial, char c)
     RT_ASSERT(serial != RT_NULL);
     uart = (struct hw_uart_device *)serial->parent.user_data;
 
-    while (UART_FR(uart->hw_base) & UARTFR_TXFF);
-    UART_DR(uart->hw_base) = c;
+    //FIXME: fifo??
+    //while (UART_FR(uart->hw_base) & UARTFR_TXFF);
+    UART_TxRxFIFO0(uart->hw_base) = c;
 
     return 1;
 }
@@ -109,12 +112,15 @@ static int uart_getc(struct rt_serial_device *serial)
     RT_ASSERT(serial != RT_NULL);
     uart = (struct hw_uart_device *)serial->parent.user_data;
 
+#if 0
     ch = -1;
     if (!(UART_FR(uart->hw_base) & UARTFR_RXFE))
     {
         ch = UART_DR(uart->hw_base) & 0xff;
     }
-
+#else
+    ch = 'a';
+#endif
     return ch;
 }
 
@@ -130,7 +136,7 @@ static const struct rt_uart_ops _uart_ops =
 static struct serial_ringbuffer _uart_int_rx;
 static struct hw_uart_device _uart_device =
 {
-    REALVIEW_UART0_BASE,
+    ZED_UART1_BASE,
     IRQ_PBA8_UART0,
 };
 static struct rt_serial_device _serial;
@@ -162,3 +168,19 @@ int rt_hw_uart_init(void)
     return 0;
 }
 INIT_BOARD_EXPORT(rt_hw_uart_init);
+
+
+/* <stdio.h>'s printf uses puts to send chars
+   puts so that printf sends char to the serial port*/
+int puts(const char *s)
+{
+    while(*s != '\0')
+    {     /* Loop until end of string */
+         //*TxRxUART1 = (unsigned int)(*s); 
+	 UART_TxRxFIFO0(ZED_UART1_BASE) = *s;/* Transmit char */
+         s++; /* Next char */
+    }
+
+    return 0;
+}
+

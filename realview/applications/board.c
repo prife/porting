@@ -21,6 +21,7 @@
 #define TIMER_LOAD(hw_base)              __REG32(hw_base + 0x00)
 #define TIMER_VALUE(hw_base)             __REG32(hw_base + 0x04)
 #define TIMER_CTRL(hw_base)              __REG32(hw_base + 0x08)
+
 #define TIMER_CTRL_ONESHOT      (1 << 0)
 #define TIMER_CTRL_32BIT        (1 << 1)
 #define TIMER_CTRL_DIV1         (0 << 2)
@@ -28,7 +29,12 @@
 #define TIMER_CTRL_DIV256       (2 << 2)
 #define TIMER_CTRL_IE           (1 << 5)        /* Interrupt Enable (versatile only) */
 #define TIMER_CTRL_PERIODIC     (1 << 6)
-#define TIMER_CTRL_ENABLE       (1 << 7)
+
+#define TIMER_CTRL_PRESCALER    (0xFF00)
+#define TIMER_CTRL_MODE         (1 << 3) //'0' oneshort, '1', period
+#define TIMER_CTRL_IRQ_ENABLE   (1 << 2)
+#define TIMER_CTRL_CMP_ENABLE   (1 << 1)
+#define TIMER_CTRL_ENABLE       (1 << 0)
 
 #define TIMER_INTCLR(hw_base)            __REG32(hw_base + 0x0c)
 #define TIMER_RIS(hw_base)               __REG32(hw_base + 0x10)
@@ -38,11 +44,11 @@
 #define SYS_CTRL                        __REG32(REALVIEW_SCTL_BASE)
 
 static void rt_hw_timer_isr(int vector, void *param)
-{
+{   printf("\n isr!\n");
     rt_tick_increase();
 
     /* clear interrupt */
-    TIMER_INTCLR(REALVIEW_TIMER0_1_BASE) = 0x01;
+    TIMER_INTCLR(ZED_TIMER_GLOBAL_BASE) = 0x01;
 }
 
 int rt_hw_timer_init(void)
@@ -54,21 +60,26 @@ int rt_hw_timer_init(void)
      *      REALVIEW_REFCLK is 32KHz
      *      REALVIEW_TIMCLK is 1MHz
      */
-    SYS_CTRL |= REALVIEW_REFCLK;
+    //SYS_CTRL |= REALVIEW_REFCLK;//FIXME ??
 
-    /* Setup Timer0 for generating irq */
-    val = TIMER_CTRL(REALVIEW_TIMER0_1_BASE);
-    val &= ~TIMER_CTRL_ENABLE;
-    val |= (TIMER_CTRL_32BIT | TIMER_CTRL_PERIODIC | TIMER_CTRL_IE);
-    TIMER_CTRL(REALVIEW_TIMER0_1_BASE) = val;
+    /* Setup global 64bit timer for generating irq */
+    val = TIMER_CTRL(ZED_TIMER_GLOBAL_BASE);
+    val &= ~ TIMER_CTRL_IRQ_ENABLE;
+    //val |= (TIMER_CTRL_32BIT | TIMER_CTRL_PERIODIC | TIMER_CTRL_IE);
 
-    TIMER_LOAD(REALVIEW_TIMER0_1_BASE) = 1000;
+    //val |= (TIMER_CTRL_MODE | TIMER_CTRL_IRQ_ENABLE);
+    val |= (TIMER_CTRL_MODE | TIMER_CTRL_IRQ_ENABLE | TIMER_CTRL_CMP_ENABLE);
+
+    TIMER_CTRL(ZED_TIMER_GLOBAL_BASE) = val;
+
+    /* TODO: set prescaler of GTimer */
+    TIMER_LOAD(ZED_TIMER_GLOBAL_BASE) = 1000;
 
     /* enable timer */
-    TIMER_CTRL(REALVIEW_TIMER0_1_BASE) |= TIMER_CTRL_ENABLE;
+    TIMER_CTRL(ZED_TIMER_GLOBAL_BASE) |=  TIMER_CTRL_ENABLE;
 
-    rt_hw_interrupt_install(IRQ_PBA8_TIMER0_1, rt_hw_timer_isr, RT_NULL, "tick");
-    rt_hw_interrupt_umask(IRQ_PBA8_TIMER0_1);
+    rt_hw_interrupt_install(IRQ_ZED_GTIMER, rt_hw_timer_isr, RT_NULL, "tick");
+    rt_hw_interrupt_umask(IRQ_ZED_GTIMER);
 
     return 0;
 }

@@ -37,8 +37,8 @@ if PLATFORM == 'gcc':
     SIZE = PREFIX + 'size'
     OBJDUMP = PREFIX + 'objdump'
     OBJCPY = PREFIX + 'objcopy'
-
-    DEVICE = ' -march=armv7-a -mtune=cortex-a8 -mfpu=neon -ftree-vectorize -ffast-math -mfloat-abi=softfp'
+    #ARCH    = -mcpu=cortex-a9 -mfpu=vfpv3 
+    DEVICE = ' -mcpu=cortex-a9 -mfpu=vfpv3 -ftree-vectorize -ffast-math -mfloat-abi=softfp'
     CFLAGS = DEVICE
     AFLAGS = ' -c' + DEVICE + ' -x assembler-with-cpp'
     LFLAGS = DEVICE + ' -Wl,--gc-sections,-Map=realview.map,-cref,-u,Reset_Handler -T realview.ld'
