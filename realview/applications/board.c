@@ -44,7 +44,8 @@
 #define SYS_CTRL                        __REG32(REALVIEW_SCTL_BASE)
 
 static void rt_hw_timer_isr(int vector, void *param)
-{   printf("\n isr!\n");
+{
+    rt_kprintf("\n isr!\n");
     rt_tick_increase();
 
     /* clear interrupt */
@@ -54,7 +55,7 @@ static void rt_hw_timer_isr(int vector, void *param)
 int rt_hw_timer_init(void)
 {
     rt_uint32_t val;
-
+    rt_kprintf("%s\n", __func__);
     /*
      * set clock frequency:
      *      REALVIEW_REFCLK is 32KHz
@@ -71,6 +72,7 @@ int rt_hw_timer_init(void)
     val |= (TIMER_CTRL_MODE | TIMER_CTRL_IRQ_ENABLE | TIMER_CTRL_CMP_ENABLE);
 
     TIMER_CTRL(ZED_TIMER_GLOBAL_BASE) = val;
+    rt_kprintf("%x, %x\n", val, TIMER_CTRL(ZED_TIMER_GLOBAL_BASE));
 
     /* TODO: set prescaler of GTimer */
     TIMER_LOAD(ZED_TIMER_GLOBAL_BASE) = 1000;
@@ -83,7 +85,7 @@ int rt_hw_timer_init(void)
 
     return 0;
 }
-INIT_BOARD_EXPORT(rt_hw_timer_init);
+//INIT_BOARD_EXPORT(rt_hw_timer_init);
 
 /**
  * This function will initialize beaglebone board
@@ -92,6 +94,7 @@ void rt_hw_board_init()
 {
     rt_components_board_init();
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
+    rt_hw_timer_init();
 }
 
 /*@}*/

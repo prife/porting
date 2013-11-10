@@ -25,6 +25,6 @@ extern int __bss_end;
 #define HEAP_BEGIN      ((void*)&__bss_end)
 #endif
 
-#define HEAP_END        (void*)(0x70000000 + 8 * 1024 * 1024)
+#define HEAP_END        (void*)(0x80000)
 
 #endif
