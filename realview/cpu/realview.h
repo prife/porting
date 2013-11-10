@@ -74,6 +74,8 @@
 #define IRQ_PBA8_GIC_START          32
 
 #define IRQ_ZED_GTIMER              27
+#define IRQ_ZED_UART0               (59-32)
+#define IRQ_ZED_UART1               82
 /*
  * PB-A8 on-board gic irq sources
  */

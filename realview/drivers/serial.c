@@ -31,6 +31,7 @@
 #include <rtdevice.h>
 
 #include "serial.h"
+#include "uart.h"
 
 struct hw_uart_device
 {
@@ -53,10 +54,47 @@ struct hw_uart_device
 #define UARTICR_RXIC    0x10
 #define UARTICR_TXIC    0x20
 
+/*
+* Initiate UART1  ( /dev/ttyACM0 on host computer )
+*   115,200 Baud 8-bit No-Parity 1-stop-bit
+*/
+void init_uart1_RxTx_115200_8N1()
+{
+    /* Disable the transmitter and receiver before writing to the Baud Rate Generator */
+    UART1->control_reg0=0;
+
+    /* Set Baudrate to 115,200 Baud */
+    UART1->baud_rate_divider =XUARTPS_BDIV_CD_115200;
+    UART1->baud_rate_gen=     XUARTPS_BRGR_CD_115200;
+
+    /*Set 8-bit NoParity 1-StopBit*/
+    UART1->mode_reg0   =  XUARTPS_MR_PAR_NONE;
+
+    /* enable interrupt! */
+    UART1->intrpt_en_reg0 = UART_IXR_RTRIG | UART_IXR_RFUL;
+    rt_kprintf("reg:0x%x, write:0x%x\n",  UART1->intrpt_en_reg0, UART_IXR_RTRIG | UART_IXR_RFUL);
+    //UART1->Tx_FIFO_trigger_level = ?
+
+    /*Enable Rx & Tx*/
+    UART1->control_reg0=  XUARTPS_CR_TXEN | XUARTPS_CR_RXEN | XUARTPS_CR_TXRES | XUARTPS_CR_RXRES ;
+}
+
+void sendUART1char(char s)
+{
+    /*Make sure that the uart is ready for new char's before continuing*/
+    while ((( UART1->channel_sts_reg0 ) & UART_STS_TXFULL) > 0) ;
+
+    /* Loop until end of string */
+    UART1->tx_rx_fifo= (unsigned int) s; /* Transmit char */
+}
+
+/* RT-Thread UART interface */
+
 static void rt_hw_uart_isr(int irqno, void *param)
 {
     struct rt_serial_device *serial = (struct rt_serial_device *)param;
 
+    rt_kprintf("uart isr!\n");
     rt_hw_serial_isr(serial);
 }
 
@@ -76,12 +114,14 @@ static rt_err_t uart_control(struct rt_serial_device *serial, int cmd, void *arg
     {
     case RT_DEVICE_CTRL_CLR_INT:
         /* disable rx irq */
-        UART_IMSC(uart->hw_base) &= ~UARTIMSC_RXIM;
+        //UART_IMSC(uart->hw_base) &= ~UARTIMSC_RXIM;
+        UART1->intrpt_en_reg0 &= ~(UART_IXR_RTRIG | UART_IXR_RFUL);
         break;
 
     case RT_DEVICE_CTRL_SET_INT:
         /* enable rx irq */
-        UART_IMSC(uart->hw_base) |= UARTIMSC_RXIM;
+        UART1->intrpt_en_reg0 = UART_IXR_RTRIG | UART_IXR_RFUL;
+        //UART_IMSC(uart->hw_base) |= UARTIMSC_RXIM;
         rt_hw_interrupt_install(uart->irqno, rt_hw_uart_isr, serial, "uart");
         rt_hw_interrupt_umask(uart->irqno);
         break;
@@ -97,9 +137,13 @@ static int uart_putc(struct rt_serial_device *serial, char c)
     RT_ASSERT(serial != RT_NULL);
     uart = (struct hw_uart_device *)serial->parent.user_data;
 
-    //FIXME: fifo??
+    /*Make sure that the uart is ready for new char's before continuing*/
     //while (UART_FR(uart->hw_base) & UARTFR_TXFF);
-    UART_TxRxFIFO0(uart->hw_base) = c;
+    while (( UART1->channel_sts_reg0 ) & UART_STS_TXFULL) ;
+
+    /* Loop until end of string */
+    //UART_TxRxFIFO0(uart->hw_base) = c;
+	UART1->tx_rx_fifo= c;
 
     return 1;
 }
@@ -119,7 +163,15 @@ static int uart_getc(struct rt_serial_device *serial)
         ch = UART_DR(uart->hw_base) & 0xff;
     }
 #else
-    ch = 'a';
+    ch = -1;
+
+    if (UART1->chnl_int_sts_reg0 & UART_IXR_RTRIG)
+    {
+        ch = UART1->tx_rx_fifo & 0xff;
+        //FIXME:write 1 to clear?!!
+        UART1->chnl_int_sts_reg0 = (UART_IXR_RTRIG | UART_IXR_RFUL);
+    }
+
 #endif
     return ch;
 }
@@ -137,7 +189,7 @@ static struct serial_ringbuffer _uart_int_rx;
 static struct hw_uart_device _uart_device =
 {
     ZED_UART1_BASE,
-    IRQ_PBA8_UART0,
+    IRQ_ZED_UART0,
 };
 static struct rt_serial_device _serial;
 
@@ -163,24 +215,10 @@ int rt_hw_uart_init(void)
                           RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX | RT_DEVICE_FLAG_STREAM,
                           uart);
     /* enable Rx and Tx of UART */
-    UART_CR(uart->hw_base) = (1 << 0) | (1 << 8) | (1 << 9);
+    //UART_CR(uart->hw_base) = (1 << 0) | (1 << 8) | (1 << 9);
+    init_uart1_RxTx_115200_8N1();
 
     return 0;
 }
 INIT_BOARD_EXPORT(rt_hw_uart_init);
-
-
-/* <stdio.h>'s printf uses puts to send chars
-   puts so that printf sends char to the serial port*/
-int puts(const char *s)
-{
-    while(*s != '\0')
-    {     /* Loop until end of string */
-         //*TxRxUART1 = (unsigned int)(*s); 
-	 UART_TxRxFIFO0(ZED_UART1_BASE) = *s;/* Transmit char */
-         s++; /* Next char */
-    }
-
-    return 0;
-}
 
