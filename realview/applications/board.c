@@ -17,6 +17,7 @@
 #include <components.h>
 
 #include "board.h"
+#include "ptimer.h"
 
 #define TIMER_LOAD(hw_base)              __REG32(hw_base + 0x00)
 #define TIMER_VALUE(hw_base)             __REG32(hw_base + 0x04)
@@ -45,11 +46,12 @@
 
 static void rt_hw_timer_isr(int vector, void *param)
 {
-    rt_kprintf("\n isr!\n");
+    rt_kprintf("\n timer isr!\n");
     rt_tick_increase();
 
     /* clear interrupt */
-    TIMER_INTCLR(ZED_TIMER_GLOBAL_BASE) = 0x01;
+    //TIMER_INTCLR(ZED_TIMER_GLOBAL_BASE) = 0x01;
+    PrivateTimerClearExpiration(PRIVATE_TIMER);
 }
 
 int rt_hw_timer_init(void)
@@ -62,7 +64,7 @@ int rt_hw_timer_init(void)
      *      REALVIEW_TIMCLK is 1MHz
      */
     //SYS_CTRL |= REALVIEW_REFCLK;//FIXME ??
-
+#if 0
     /* Setup global 64bit timer for generating irq */
     val = TIMER_CTRL(ZED_TIMER_GLOBAL_BASE);
     val &= ~ TIMER_CTRL_IRQ_ENABLE;
@@ -79,9 +81,18 @@ int rt_hw_timer_init(void)
 
     /* enable timer */
     TIMER_CTRL(ZED_TIMER_GLOBAL_BASE) |=  TIMER_CTRL_ENABLE;
+#else
+    PrivateTimerStop(PRIVATE_TIMER);
+    PrivateTimerSetPrescaler(PRIVATE_TIMER, 255);
+    PrivateTimerLoad(PRIVATE_TIMER, 1302083);
+    PrivateTimerEnableAutoReload(PRIVATE_TIMER, 1302083);
+    PrivateTimerEnableInterrupt(PRIVATE_TIMER);
+    PrivateTimerClearExpiration(PRIVATE_TIMER);
+    PrivateTimerStart(PRIVATE_TIMER);
+#endif
 
-    rt_hw_interrupt_install(IRQ_ZED_GTIMER, rt_hw_timer_isr, RT_NULL, "tick");
-    rt_hw_interrupt_umask(IRQ_ZED_GTIMER);
+    rt_hw_interrupt_install(IRQ_ZED_PTIMER, rt_hw_timer_isr, RT_NULL, "tick");
+    rt_hw_interrupt_umask(IRQ_ZED_PTIMER);
 
     return 0;
 }

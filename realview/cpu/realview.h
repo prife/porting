@@ -73,9 +73,6 @@
  */
 #define IRQ_PBA8_GIC_START          32
 
-#define IRQ_ZED_GTIMER              27
-#define IRQ_ZED_UART0               59
-#define IRQ_ZED_UART1               82
 /*
  * PB-A8 on-board gic irq sources
  */
@@ -327,5 +324,11 @@ struct rt_hw_register
 
 #define ZED_GIC_CPU_BASE            0xF8F00100  /* Generic interrupt controller CPU interface */
 #define ZED_GIC_DIST_BASE           0xF8F01000  /* Generic interrupt controller distributor */
+
+/* zynq on-board gic irq sources */
+#define IRQ_ZED_GTIMER              27
+#define IRQ_ZED_PTIMER              29
+#define IRQ_ZED_UART0               59
+#define IRQ_ZED_UART1               82
 #endif
 
