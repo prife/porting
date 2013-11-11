@@ -95,7 +95,6 @@ static void rt_hw_uart_isr(int irqno, void *param)
 {
     struct rt_serial_device *serial = (struct rt_serial_device *)param;
 
-    rt_kprintf("uart isr!\n");
     rt_hw_serial_isr(serial);
 }
 

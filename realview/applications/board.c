@@ -46,7 +46,6 @@
 
 static void rt_hw_timer_isr(int vector, void *param)
 {
-    rt_kprintf("\n timer isr!\n");
     rt_tick_increase();
 
     /* clear interrupt */
