@@ -89,8 +89,7 @@ int arm_gic_dist_init(rt_uint32_t index, rt_uint32_t dist_base, int irq_start)
     cpumask |= cpumask << 16;
 
     _gic_table[index].dist_hw_base = dist_base;
-    //_gic_table[index].offset = irq_start;//(irq_start - 1) & ~31;
-    _gic_table[index].offset = (irq_start - 1) & ~31;
+    _gic_table[index].offset = irq_start;
 
     GIC_DIST_CTRL(dist_base) = 0x0;
 

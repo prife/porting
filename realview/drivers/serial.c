@@ -71,6 +71,7 @@ void init_uart1_RxTx_115200_8N1()
     UART1->mode_reg0   =  XUARTPS_MR_PAR_NONE;
 
     /* enable interrupt! */
+    UART1->Rcvr_FIFO_trigger_level0 = 1;
     UART1->intrpt_en_reg0 = UART_IXR_RTRIG | UART_IXR_RFUL;
     rt_kprintf("reg:0x%x, write:0x%x\n",  UART1->intrpt_en_reg0, UART_IXR_RTRIG | UART_IXR_RFUL);
     //UART1->Tx_FIFO_trigger_level = ?
@@ -189,7 +190,7 @@ static struct serial_ringbuffer _uart_int_rx;
 static struct hw_uart_device _uart_device =
 {
     ZED_UART1_BASE,
-    IRQ_ZED_UART0,
+    IRQ_ZED_UART1,
 };
 static struct rt_serial_device _serial;
 
