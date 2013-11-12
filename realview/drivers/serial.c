@@ -31,7 +31,10 @@
 #include <rtdevice.h>
 
 #include "serial.h"
-#include "uart.h"
+#include "uart_hw.h"
+
+#define ZED_UART_INT_DISABLE(UART) (UART->IER &= ~(UART_IXR_RXOVR | UART_IXR_RXFULL))
+#define ZED_UART_INT_ENABLE(UART) (UART->IER |= (UART_IXR_RXOVR | UART_IXR_RXFULL))
 
 struct hw_uart_device
 {
@@ -58,6 +61,7 @@ struct hw_uart_device
 * Initiate UART1  ( /dev/ttyACM0 on host computer )
 *   115,200 Baud 8-bit No-Parity 1-stop-bit
 */
+#if 0
 void init_uart1_RxTx_115200_8N1()
 {
     /* Disable the transmitter and receiver before writing to the Baud Rate Generator */
@@ -88,6 +92,7 @@ void sendUART1char(char s)
     /* Loop until end of string */
     UART1->tx_rx_fifo= (unsigned int) s; /* Transmit char */
 }
+#endif
 
 /* RT-Thread UART interface */
 
@@ -114,14 +119,12 @@ static rt_err_t uart_control(struct rt_serial_device *serial, int cmd, void *arg
     {
     case RT_DEVICE_CTRL_CLR_INT:
         /* disable rx irq */
-        //UART_IMSC(uart->hw_base) &= ~UARTIMSC_RXIM;
-        UART1->intrpt_en_reg0 &= ~(UART_IXR_RTRIG | UART_IXR_RFUL);
+        ZED_UART_INT_DISABLE(UART1);
         break;
 
     case RT_DEVICE_CTRL_SET_INT:
         /* enable rx irq */
-        UART1->intrpt_en_reg0 = UART_IXR_RTRIG | UART_IXR_RFUL;
-        //UART_IMSC(uart->hw_base) |= UARTIMSC_RXIM;
+        ZED_UART_INT_ENABLE(UART1);
         rt_hw_interrupt_install(uart->irqno, rt_hw_uart_isr, serial, "uart");
         rt_hw_interrupt_umask(uart->irqno);
         break;
@@ -137,6 +140,7 @@ static int uart_putc(struct rt_serial_device *serial, char c)
     RT_ASSERT(serial != RT_NULL);
     uart = (struct hw_uart_device *)serial->parent.user_data;
 
+#if 0
     /*Make sure that the uart is ready for new char's before continuing*/
     //while (UART_FR(uart->hw_base) & UARTFR_TXFF);
     while (( UART1->channel_sts_reg0 ) & UART_STS_TXFULL) ;
@@ -144,6 +148,12 @@ static int uart_putc(struct rt_serial_device *serial, char c)
     /* Loop until end of string */
     //UART_TxRxFIFO0(uart->hw_base) = c;
 	UART1->tx_rx_fifo= c;
+#else
+    /*Make sure that the uart is ready for new char's before continuing*/
+    while ((UART1->SR) & UART_SR_TXFULL) ;
+	UART1->FIFO= c;
+
+#endif
 
     return 1;
 }
@@ -158,18 +168,21 @@ static int uart_getc(struct rt_serial_device *serial)
 
 #if 0
     ch = -1;
-    if (!(UART_FR(uart->hw_base) & UARTFR_RXFE))
-    {
-        ch = UART_DR(uart->hw_base) & 0xff;
-    }
-#else
-    ch = -1;
 
     if (UART1->chnl_int_sts_reg0 & UART_IXR_RTRIG)
     {
         ch = UART1->tx_rx_fifo & 0xff;
         //FIXME:write 1 to clear?!!
         UART1->chnl_int_sts_reg0 = (UART_IXR_RTRIG | UART_IXR_RFUL);
+    }
+#else
+    ch = -1;
+
+    if (UART1->SR & UART_SR_RXOVR)
+    {
+        ch = UART1->FIFO & 0xff;
+        //FIXME:write 1 to clear?!!
+        UART1->SR = (UART_SR_RXOVR | UART_SR_RXFULL);
     }
 
 #endif
@@ -216,7 +229,8 @@ int rt_hw_uart_init(void)
                           uart);
     /* enable Rx and Tx of UART */
     //UART_CR(uart->hw_base) = (1 << 0) | (1 << 8) | (1 << 9);
-    init_uart1_RxTx_115200_8N1();
+    //init_uart1_RxTx_115200_8N1();
+    UartInitialize(UART1, 115200);
 
     return 0;
 }
