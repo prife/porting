@@ -178,11 +178,11 @@ static int uart_getc(struct rt_serial_device *serial)
 #else
     ch = -1;
 
-    if (UART1->SR & UART_SR_RXOVR)
+    if (UART1->ISR & UART_SR_RXOVR)
     {
         ch = UART1->FIFO & 0xff;
         //FIXME:write 1 to clear?!!
-        UART1->SR = (UART_SR_RXOVR | UART_SR_RXFULL);
+        UART1->ISR = (UART_IXR_RXOVR | UART_IXR_RXFULL);
     }
 
 #endif
