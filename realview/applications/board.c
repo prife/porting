@@ -102,6 +102,9 @@ int rt_hw_timer_init(void)
  */
 void rt_hw_board_init()
 {
+    /* init system hardware */
+    ps7_init();
+
     rt_components_board_init();
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
     rt_hw_timer_init();
