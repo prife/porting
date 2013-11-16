@@ -88,8 +88,8 @@ void UartInitialize(UART_Registers* uart, uint32_t baudrate)
 	//uart->IDR = UART_IXR_MASK;
 
     //enable intterrupt!
-    //uart->IER = UART_IXR_RTRIG | UART_IXR_RFUL;
-    uart->IER = UART_IXR_TXEMPTY | UART_IXR_RXEMPTY | UART_IXR_RXOVR| UART_IXR_OVER | UART_IXR_RXFULL;
+    uart->IER = UART_IXR_RXOVR | UART_IXR_RXFULL;
+    //uart->IER = UART_IXR_TXEMPTY | UART_IXR_RXEMPTY | UART_IXR_RXOVR| UART_IXR_OVER | UART_IXR_RXFULL;
 
 	//uart->CR = (UART_CR_TX_EN | UART_CR_RX_EN | UART_CR_TXRST | UART_CR_RXRST);
 }
