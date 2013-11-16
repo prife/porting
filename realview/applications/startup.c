@@ -24,8 +24,6 @@ extern int  rt_application_init(void);
  */
 void rtthread_startup(void)
 {
-    printf("hello, world!\n");
-
     /* initialzie hardware interrupt */
     rt_hw_interrupt_init();
 

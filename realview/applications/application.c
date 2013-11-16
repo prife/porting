@@ -13,11 +13,20 @@
  */
 
 #include <rtthread.h>
+#ifdef RT_USING_COMPONENTS_INIT
 #include <components.h>
+#endif
 
-#include <pthread.h>
+/* thread phase init */
+static void rt_init_thread_entry(void *parameter)
+{
+    /* do component initialization */
+    rt_components_init();
 
-void *test_task(void *parameter)
+    /* add your initialization here */
+}
+
+static void test_task(void *parameter)
 {
     int count = 0;
 
@@ -26,20 +35,21 @@ void *test_task(void *parameter)
         rt_thread_delay(RT_TICK_PER_SECOND);
         rt_kprintf("count = %d\n", count ++);
     }
-
-    return RT_NULL;
 }
 
 int rt_application_init()
 {
-    pthread_t tid;
+    rt_thread_t tid;
 
-    /* do component initialization */
-    rt_components_init();
-    libc_system_init(RT_CONSOLE_DEVICE_NAME);
-    finsh_set_device(RT_CONSOLE_DEVICE_NAME);
+    tid = rt_thread_create("init", rt_init_thread_entry, RT_NULL, 2048,
+                            RT_THREAD_PRIORITY_MAX/3, 20);
+    if (tid != RT_NULL)
+        rt_thread_startup(tid);
 
-    pthread_create(&tid, RT_NULL, test_task, RT_NULL);
+    tid = rt_thread_create("test", test_task, RT_NULL, 512,
+                            RT_THREAD_PRIORITY_MAX-2, 20);
+    if (tid != RT_NULL)
+        rt_thread_startup(tid);
 
     return 0;
 }
